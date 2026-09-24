@@ -1,7 +1,7 @@
 # Inmo · ronda por navegador
 
 Extensión para Vivaldi, Chrome, Edge o cualquier navegador basado en Chromium. Una vez por día abre tus búsquedas
-de Zonaprop en una ventana minimizada de **tu propio navegador**, página por página, y las carga en tu servidor de
+de **Zonaprop, Argenprop y MercadoLibre** en una ventana minimizada de **tu propio navegador**, página por página, y las carga en tu servidor de
 [Inmo](https://github.com/Nrlemo/inmo-scrapper). Es **la forma de traer avisos a Inmo**: el servidor no pide páginas
 a los portales, porque la protección anti-bots (Cloudflare) bloquea a los clientes que no son un navegador real.
 
@@ -12,7 +12,9 @@ a los portales, porque la protección anti-bots (Cloudflare) bloquea a los clien
   una ronda por día como máximo (intervalo mínimo de 20 h) y 24 h de espera tras un bloqueo.
 - **Sólo da de baja** un aviso después de una ronda completa.
 
-Requiere Inmo **1.0.0** o posterior.
+Requiere Inmo **1.0.0** o posterior; Argenprop y MercadoLibre, Inmo **1.1.0** o posterior (antes, sólo Zonaprop).
+Qué portales y zonas recorre se configura en Inmo → Estado → Búsqueda; la ronda los visita uno detrás de otro, cada
+uno con sus propias pausas, y si uno bloquea se sigue con los demás.
 
 ## Instalación
 
@@ -40,9 +42,9 @@ Requiere Inmo **1.0.0** o posterior.
   la da por interrumpida.
 - Abre las páginas en una **ventana minimizada**, que se cierra sola al terminar. Podés seguir usando el navegador,
   pero no cierres esa ventana mientras corre.
-- Si Zonaprop muestra la verificación de Cloudflare, espera hasta ~30 s a que se resuelva sola. Si no se resuelve, la
-  ronda se registra como **bloqueada** y no se reintenta hasta que pase el cooldown (24 h). Si esto pasa seguido,
-  entrá a Zonaprop a mano desde este navegador y resolvé la verificación.
+- Si un portal muestra su verificación anti-bots (p. ej. la de Cloudflare), espera hasta ~30 s a que se resuelva sola. Si no se resuelve, la
+  ronda de ese portal se registra como **bloqueada** y no se reintenta hasta que pase su cooldown (24 h por defecto). Si esto pasa seguido,
+  entrá a ese portal a mano desde este navegador y resolvé la verificación. Los demás portales de la ronda siguen.
 - Una ronda completa tarda entre 30 y 60 min según la cantidad de zonas.
 - Una ronda se puede cancelar desde las opciones de la extensión o desde Inmo → Estado. Lo recibido queda guardado,
   pero no se da de baja ningún aviso.
