@@ -17,13 +17,13 @@ Requiere Inmo **1.0.0** o posterior.
 ## Instalación
 
 1. Descargá `inmo-extension-X.Y.Z.zip` de la [última release](https://github.com/Nrlemo/inmo-extension/releases/latest)
-   y descomprimilo en una carpeta **que no vayas a borrar** (por ejemplo `~/inmo-extension`). El navegador carga la
-   extensión desde ahí cada vez que arranca.
+   y descomprimilo en un lugar **que no vayas a borrar** (por ejemplo tu carpeta personal): se crea la carpeta
+   `inmo-extension/`. El navegador carga la extensión desde ahí cada vez que arranca.
    También podés clonar el repo: `git clone https://github.com/Nrlemo/inmo-extension.git`.
 2. En Inmo: **Estado → Ronda por navegador → Generar token**. Copialo: se muestra una sola vez.
 3. En Vivaldi, abrí `vivaldi://extensions` (en Chrome, `chrome://extensions`; en Edge, `edge://extensions`) y activá
    **Modo de desarrollador**.
-4. **Cargar extensión descomprimida** y elegí la carpeta del paso 1 (la que tiene `manifest.json`).
+4. **Cargar extensión descomprimida** y elegí la carpeta `inmo-extension/` del paso 1 (la que tiene `manifest.json`).
 5. Se abre la pantalla de opciones. Si no, tocá el ícono de Inmo en la barra. Completá:
    - **Servidor:** la dirección con la que abrís Inmo, por ejemplo `https://inmo.midominio.com`. Al guardar, el
      navegador pide permiso para conectarse a ese servidor.
@@ -49,8 +49,8 @@ Requiere Inmo **1.0.0** o posterior.
 
 ## Actualizar
 
-1. Descargá el `.zip` de la versión nueva y descomprimilo **en la misma carpeta**, reemplazando los archivos (con
-   git: `git pull`).
+1. Descargá el `.zip` de la versión nueva y descomprimilo **en el mismo lugar que la anterior**, reemplazando los
+   archivos de `inmo-extension/` (con git: `git pull`).
 2. En `vivaldi://extensions` tocá **Recargar** (↻) en la tarjeta de Inmo.
 
 La configuración se conserva. Si en cambio cargás la extensión desde otra carpeta, el navegador la toma como una
