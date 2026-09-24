@@ -1,6 +1,7 @@
 // Inmo · ronda por navegador.
 //
-// Una vez por día abre las búsquedas de Zonaprop en una ventana minimizada de este navegador, página por página, y le
+// Una vez por día abre tus búsquedas (Zonaprop, Argenprop, MercadoLibre) en una ventana minimizada de este navegador,
+// página por página, y le
 // manda cada una al servidor de Inmo (/api/navegador/*). El servidor decide qué página sigue y cuánto esperar (zonas,
 // topes y pausas de su profiles.yaml), guarda los avisos y, al terminar una ronda completa, da de baja los que ya no
 // aparecen. Acá no hay lógica de búsqueda: sólo abrir, esperar, leer y enviar.
@@ -11,6 +12,7 @@
 const MIN_PAUSA_S = 30;           // chrome.alarms no admite menos de 30 s
 const TIMEOUT_CARGA_MIN = 2;      // si la página no carga en este tiempo, se informa como error y se sigue
 const DESAFIO = /un momento|just a moment|attention required|verific/i;   // título de la página de Cloudflare
+const HOST_ZONAPROP = "https://www.zonaprop.com.ar/";   // servidores anteriores al multi-portal no mandan «host»
 
 // ---------- configuración y estado ----------
 const config = () => chrome.storage.local.get({ servidor: "", token: "", hora: "03:30", activa: true });
@@ -89,7 +91,7 @@ async function iniciarRonda(forzar = false) {
   try { r = await api("/api/navegador/ronda", { forzar }); }
   catch (e) { return anotar("error", e.message); }
   if (r.omitir) return anotar("omitida", r.omitir);
-  await guardarRonda({ id: r.ronda, url: r.url, tabId: null, windowId: null, cargando: false });
+  await guardarRonda({ id: r.ronda, url: r.url, host: r.host || HOST_ZONAPROP, tabId: null, windowId: null, cargando: false });
   await anotar("corriendo", `Ronda ${r.ronda} en curso`);
   await abrir();
 }
@@ -125,7 +127,9 @@ async function abrir() {
 chrome.tabs.onUpdated.addListener(async (tabId, info, tab) => {
   if (info.status !== "complete") return;
   const r = await ronda();
-  if (!r || tabId !== r.tabId || !r.cargando || !(tab.url || "").startsWith("https://www.zonaprop.com.ar/")) return;
+  // La pestaña tiene que estar en el portal de la página pedida (el servidor manda su «host»); si el sitio redirigió a
+  // otro lado (login, verificación), se ignora y la página termina como error por tiempo de espera.
+  if (!r || tabId !== r.tabId || !r.cargando || !(tab.url || "").startsWith(r.host || HOST_ZONAPROP)) return;
   r.cargando = false;
   await guardarRonda(r);
   await chrome.alarms.clear("timeout");
@@ -158,6 +162,7 @@ async function seguir(resp) {
   const r = await ronda();
   if (!r) return;
   r.url = resp.siguiente;
+  r.host = resp.host || r.host || HOST_ZONAPROP;
   await guardarRonda(r);
   chrome.alarms.create("paso", { delayInMinutes: Math.max(resp.pausa || 0, MIN_PAUSA_S) / 60 });
 }
