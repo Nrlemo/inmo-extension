@@ -69,4 +69,5 @@ $("cancelar").addEventListener("click", async () => {
 });
 
 chrome.storage.onChanged.addListener(mostrarEstado);
+$("version").textContent = chrome.runtime.getManifest().version;
 cargar();

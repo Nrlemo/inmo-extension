@@ -1,8 +1,8 @@
 // Inmo · ronda por navegador.
 //
 // Una vez por día abre las búsquedas de Zonaprop en una ventana minimizada de este navegador, página por página, y le
-// manda cada una al servidor de Inmo (/api/navegador/*). El servidor decide qué página sigue y cuánto esperar (mismas
-// zonas, topes y pausas que el scrapper), guarda los avisos y, al terminar una ronda completa, da de baja los que ya no
+// manda cada una al servidor de Inmo (/api/navegador/*). El servidor decide qué página sigue y cuánto esperar (zonas,
+// topes y pausas de su profiles.yaml), guarda los avisos y, al terminar una ronda completa, da de baja los que ya no
 // aparecen. Acá no hay lógica de búsqueda: sólo abrir, esperar, leer y enviar.
 //
 // El service worker de una extensión MV3 se apaga cuando está inactivo, así que la ronda es una máquina de estados
