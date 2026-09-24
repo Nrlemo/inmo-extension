@@ -4,6 +4,8 @@ Extensión para Vivaldi, Chrome, Edge o cualquier navegador basado en Chromium. 
 de Zonaprop en una ventana minimizada de **tu propio navegador**, página por página, y las carga en tu servidor de
 Inmo. Reemplaza al scrapper HTTP, que Cloudflare bloquea seguido.
 
+Necesita un servidor de [Inmo](https://github.com/Nrlemo/inmo-scrapper) con la API `/api/navegador/`.
+
 - **Mismas reglas que el scrapper:** usa las zonas de `profiles.yaml`, el tope de 5 páginas por búsqueda
   (`robots.txt`), los filtros del perfil y las pausas de cortesía (30 s a 2,5 min). Solo da de baja un aviso después
   de una ronda completa.
@@ -14,16 +16,17 @@ Inmo. Reemplaza al scrapper HTTP, que Cloudflare bloquea seguido.
 
 ## Instalación
 
-1. En Inmo: **Estado → Ronda por navegador → Generar token**. Copialo: se muestra una sola vez.
-2. En Vivaldi, abrí `vivaldi://extensions` (en Chrome, `chrome://extensions`) y activá **Modo de desarrollador**.
-3. **Cargar extensión descomprimida** y elegí esta carpeta (`extension/`).
-4. Se abre la pantalla de opciones. Si no, tocá el ícono de Inmo en la barra. Completá:
+1. Cloná este repo: `git clone git@github.com:Nrlemo/inmo-extension.git`.
+2. En Inmo: **Estado → Ronda por navegador → Generar token**. Copialo: se muestra una sola vez.
+3. En Vivaldi, abrí `vivaldi://extensions` (en Chrome, `chrome://extensions`) y activá **Modo de desarrollador**.
+4. **Cargar extensión descomprimida** y elegí la carpeta del repo (`inmo-extension/`).
+5. Se abre la pantalla de opciones. Si no, tocá el ícono de Inmo en la barra. Completá:
    - **Servidor:** la dirección con la que abrís Inmo, por ejemplo `https://inmo.midominio.com`. Al guardar, el
      navegador pide permiso para conectarse a ese servidor.
-   - **Token:** el del paso 1.
+   - **Token:** el del paso 2.
    - **Hora de la ronda diaria:** por defecto 03:30, más una demora aleatoria de hasta 20 min.
-5. **Probar conexión** tiene que responder «Conectado como …».
-6. Opcional: **Correr ronda ahora** para ver la primera ronda. El avance aparece también en Inmo → Estado.
+6. **Probar conexión** tiene que responder «Conectado como …».
+7. Opcional: **Correr ronda ahora** para ver la primera ronda. El avance aparece también en Inmo → Estado.
    A mano no hace falta esperar las 20 h desde la última ronda, pero sí las 24 h de espera tras un bloqueo del portal.
 
 ## Cómo se comporta
@@ -40,7 +43,7 @@ Inmo. Reemplaza al scrapper HTTP, que Cloudflare bloquea seguido.
 
 ## Actualizar
 
-Después de actualizar el repo, en `vivaldi://extensions` tocá **Recargar** (↻) en la tarjeta de Inmo. La
+Después de `git pull` en este repo, en `vivaldi://extensions` tocá **Recargar** (↻) en la tarjeta de Inmo. La
 configuración se conserva.
 
 ## Detrás de authentik
