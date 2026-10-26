@@ -11,8 +11,15 @@ a los portales, porque la protección anti-bots (Cloudflare) bloquea a los clien
 - **Cortés con el portal:** tope de 5 páginas por búsqueda (`robots.txt`), pausas aleatorias de 30 s a 2,5 min,
   una ronda por día como máximo (intervalo mínimo de 20 h) y 24 h de espera tras un bloqueo.
 - **Sólo da de baja** un aviso después de una ronda completa.
+- **Una ronda por base y por día**; cancelar corta también las bases que faltaban.
 
 Requiere Inmo **1.0.0** o posterior; Argenprop y MercadoLibre, Inmo **1.1.0** o posterior (antes, sólo Zonaprop).
+
+**Compra y alquiler (1.2.0):** Inmo guarda los avisos de compra y de alquiler en bases separadas. Cada día la extensión
+corre **una ronda por base, una detrás de otra** (con 5 a 10 min de pausa en el medio), con el mismo token. Qué bases
+recorre se elige en las opciones; una base que el servidor omita (intervalo mínimo, bloqueo del portal, otra ronda en
+curso) no corta a la otra. Un bloqueo de un portal durante una base frena también a la otra. La base de alquiler
+requiere un Inmo con alquileres; con un servidor anterior, la extensión sigue con compra y avisa que falta actualizarlo.
 Qué portales y zonas recorre se configura en Inmo → Estado → Búsqueda; la ronda los visita uno detrás de otro, cada
 uno con sus propias pausas, y si uno bloquea se sigue con los demás.
 

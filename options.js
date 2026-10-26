@@ -12,8 +12,11 @@ function normalizar(url) {
   return u.origin;
 }
 
+const BASES = ["compra", "alquiler"];
+
 async function cargar() {
-  const c = await chrome.storage.local.get({ servidor: "", token: "", hora: "03:30", activa: true });
+  const c = await chrome.storage.local.get({ servidor: "", token: "", hora: "03:30", activa: true, bases: BASES });
+  for (const b of BASES) $(`base-${b}`).checked = c.bases.includes(b);
   $("servidor").value = c.servidor;
   $("token").value = c.token;
   $("hora").value = c.hora;
@@ -22,11 +25,16 @@ async function cargar() {
 }
 
 async function mostrarEstado() {
-  const { ultima, ronda } = await chrome.storage.local.get({ ultima: null, ronda: null });
+  const { ultima, ultimas, ronda } = await chrome.storage.local.get({ ultima: null, ultimas: {}, ronda: null });
   const alarma = await chrome.alarms.get("diaria");
   const lineas = [];
-  if (ronda) lineas.push(`▶ Ronda ${ronda.id} en curso · página actual: ${ronda.url}`);
-  if (ultima) lineas.push(`Último resultado (${new Date(ultima.fecha).toLocaleString()}): ${ultima.estado}\n${ultima.mensaje}`);
+  if (ronda) lineas.push(`▶ Ronda ${ronda.id}${ronda.base ? ` (${ronda.base})` : ""} en curso · página actual: ${ronda.url}`);
+  const porBase = BASES.filter(b => ultimas[b]);
+  for (const b of porBase) {
+    const u = ultimas[b];
+    lineas.push(`Último resultado de ${b} (${new Date(u.fecha).toLocaleString()}): ${u.estado}\n${u.mensaje}`);
+  }
+  if (!porBase.length && ultima) lineas.push(`Último resultado (${new Date(ultima.fecha).toLocaleString()}): ${ultima.estado}\n${ultima.mensaje}`);
   lineas.push(alarma ? `Próxima ronda: ${new Date(alarma.scheduledTime).toLocaleString()}` : "No hay ronda programada.");
   $("estado").textContent = lineas.join("\n\n");
 }
@@ -37,7 +45,9 @@ $("guardar").addEventListener("click", async () => {
   // Permiso para hablar con el servidor de Inmo (se pide acá porque requiere un clic del usuario).
   const ok = await chrome.permissions.request({ origins: [`${servidor}/*`] });
   if (!ok) return aviso("Sin permiso para conectarse al servidor: no se guardó.", false);
-  await chrome.storage.local.set({ servidor, token: $("token").value.trim(), hora: $("hora").value || "03:30", activa: $("activa").checked });
+  const bases = BASES.filter(b => $(`base-${b}`).checked);
+  if (!bases.length) return aviso("Elegí al menos una base (compra o alquiler).", false);
+  await chrome.storage.local.set({ servidor, token: $("token").value.trim(), hora: $("hora").value || "03:30", activa: $("activa").checked, bases });
   $("servidor").value = servidor;
   aviso("Guardado.", true);
   setTimeout(mostrarEstado, 300);

@@ -8,18 +8,28 @@
 //
 // El service worker de una extensión MV3 se apaga cuando está inactivo, así que la ronda es una máquina de estados
 // guardada en chrome.storage.local ("ronda") y los pasos se disparan con chrome.alarms o con eventos de pestañas.
+//
+// Inmo tiene dos bases de avisos, compra y alquiler. Cada día se corre una ronda por base, una detrás de otra ("cola"
+// en chrome.storage.local), con unos minutos de pausa en el medio. Todas las llamadas al servidor llevan la `base`.
 
 const MIN_PAUSA_S = 30;           // chrome.alarms no admite menos de 30 s
 const TIMEOUT_CARGA_MIN = 2;      // si la página no carga en este tiempo, se informa como error y se sigue
 const DESAFIO = /un momento|just a moment|attention required|verific/i;   // título de la página de Cloudflare
 const HOST_ZONAPROP = "https://www.zonaprop.com.ar/";   // servidores anteriores al multi-portal no mandan «host»
+const BASES = ["compra", "alquiler"];
+const ENTRE_BASES_MIN = [5, 10];  // pausa aleatoria (minutos) entre la ronda de una base y la de la siguiente
 
 // ---------- configuración y estado ----------
-const config = () => chrome.storage.local.get({ servidor: "", token: "", hora: "03:30", activa: true });
+const config = () => chrome.storage.local.get({ servidor: "", token: "", hora: "03:30", activa: true, bases: BASES });
 const ronda = async () => (await chrome.storage.local.get({ ronda: null })).ronda;
 const guardarRonda = r => chrome.storage.local.set({ ronda: r });
-const anotar = (estado, mensaje) =>
-  chrome.storage.local.set({ ultima: { fecha: new Date().toISOString(), estado, mensaje: String(mensaje || "") } });
+// `ultima` es lo último que pasó (cualquier base); `ultimas[base]`, lo último de cada una.
+async function anotar(estado, mensaje, base) {
+  const dato = { fecha: new Date().toISOString(), estado, mensaje: String(mensaje || ""), base: base || null };
+  const { ultimas } = await chrome.storage.local.get({ ultimas: {} });
+  if (base) ultimas[base] = dato;
+  await chrome.storage.local.set({ ultima: dato, ultimas });
+}
 const dormir = ms => new Promise(ok => setTimeout(ok, ms));
 
 async function api(ruta, cuerpo) {
@@ -54,6 +64,8 @@ async function programar() {
 async function ponerseAlDia() {
   const c = await config();
   if (await ronda()) return chrome.alarms.create("paso", { delayInMinutes: 1 });
+  const { cola } = await chrome.storage.local.get({ cola: [] });
+  if (cola.length) return chrome.alarms.create("siguiente_base", { delayInMinutes: 1 });   // quedó una base por correr
   if (!(c.activa && c.servidor && c.token)) return;
   const { ultimaRonda } = await chrome.storage.local.get({ ultimaRonda: 0 });
   const [h, m] = c.hora.split(":").map(Number);
@@ -72,6 +84,7 @@ chrome.action.onClicked.addListener(() => chrome.runtime.openOptionsPage());
 chrome.alarms.onAlarm.addListener(async a => {
   if (a.name === "diaria") { await programar(); await iniciarRonda(); }
   else if (a.name === "atrasada") await iniciarRonda();
+  else if (a.name === "siguiente_base") await siguienteBase();
   else if (a.name === "paso") await abrir();
   else if (a.name === "timeout") await cargaFallida("la página no terminó de cargar");
 });
@@ -86,14 +99,30 @@ chrome.runtime.onMessage.addListener((msg, _sender, responder) => {
 // `forzar` (botón «Correr ronda ahora»): el servidor ignora el intervalo mínimo entre rondas, no el cooldown por bloqueo.
 async function iniciarRonda(forzar = false) {
   if (await ronda()) return;                                   // ya hay una en curso
-  await chrome.storage.local.set({ ultimaRonda: Date.now() });
-  let r;
-  try { r = await api("/api/navegador/ronda", { forzar }); }
-  catch (e) { return anotar("error", e.message); }
-  if (r.omitir) return anotar("omitida", r.omitir);
-  await guardarRonda({ id: r.ronda, url: r.url, host: r.host || HOST_ZONAPROP, tabId: null, windowId: null, cargando: false });
-  await anotar("corriendo", `Ronda ${r.ronda} en curso`);
-  await abrir();
+  const { bases } = await config();
+  const cola = BASES.filter(b => bases.includes(b));
+  await chrome.storage.local.set({ ultimaRonda: Date.now(), cola, colaForzar: forzar });
+  if (!cola.length) return anotar("omitida", "No hay ninguna base elegida en las opciones");
+  await siguienteBase();
+}
+
+// Pide al servidor la ronda de la próxima base de la cola. Una base omitida (o que falla al pedirla) no corta a las demás.
+async function siguienteBase() {
+  if (await ronda()) return;
+  const { cola, colaForzar } = await chrome.storage.local.get({ cola: [], colaForzar: false });
+  while (cola.length) {
+    const base = cola.shift();
+    await chrome.storage.local.set({ cola });
+    let r;
+    try { r = await api("/api/navegador/ronda", { base, forzar: colaForzar }); }
+    catch (e) { await anotar("error", e.message, base); continue; }
+    // Un servidor anterior a las bases separadas ignora `base` y correría la de compra otra vez: no se sigue.
+    if (r.base !== base && base !== "compra") { await anotar("omitida", "Este Inmo no tiene la base de alquiler: actualizá el servidor", base); continue; }
+    if (r.omitir) { await anotar("omitida", r.omitir, base); continue; }
+    await guardarRonda({ id: r.ronda, base, url: r.url, host: r.host || HOST_ZONAPROP, tabId: null, windowId: null, cargando: false });
+    await anotar("corriendo", `Ronda ${r.ronda} en curso`, base);
+    return abrir();
+  }
 }
 
 async function existeTab(id) {
@@ -136,7 +165,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, info, tab) => {
   let html;
   try { html = await leer(tabId); }
   catch (e) { return cargaFallida(`no se pudo leer la página: ${e.message}`); }
-  try { seguir(await api("/api/navegador/pagina", { ronda: r.id, url: r.url, html })); }
+  try { seguir(await api("/api/navegador/pagina", { base: r.base || "compra", ronda: r.id, url: r.url, html })); }
   catch (e) { terminar("error", e.message); }
 });
 
@@ -172,15 +201,17 @@ async function cargaFallida(motivo) {
   if (!r) return;
   r.cargando = false;
   await guardarRonda(r);
-  try { seguir(await api("/api/navegador/error", { ronda: r.id, url: r.url, motivo })); }
+  try { seguir(await api("/api/navegador/error", { base: r.base || "compra", ronda: r.id, url: r.url, motivo })); }
   catch (e) { terminar("error", e.message); }
 }
 
 async function cancelar() {
+  await chrome.storage.local.set({ cola: [] });                // cancelar corta también las bases que faltaban
+  await chrome.alarms.clear("siguiente_base");
   const r = await ronda();
   if (!r) return;
   let resp = { mensaje: "Cancelada desde la extensión" };
-  try { resp = await api("/api/navegador/cancelar", { ronda: r.id }); } catch { /* igual se corta acá */ }
+  try { resp = await api("/api/navegador/cancelar", { base: r.base || "compra", ronda: r.id }); } catch { /* igual se corta acá */ }
   await terminar("cancelada", resp.mensaje);
 }
 
@@ -191,5 +222,10 @@ async function terminar(estado, mensaje) {
   await guardarRonda(null);
   if (r?.windowId != null) chrome.windows.remove(r.windowId).catch(() => {});
   else if (r?.tabId != null) chrome.tabs.remove(r.tabId).catch(() => {});
-  await anotar(estado, mensaje);
+  await anotar(estado, mensaje, r?.base);
+  const { cola } = await chrome.storage.local.get({ cola: [] });
+  if (cola.length) {                                           // falta otra base: unos minutos de pausa entre portales
+    const [lo, hi] = ENTRE_BASES_MIN;
+    chrome.alarms.create("siguiente_base", { delayInMinutes: lo + Math.random() * (hi - lo) });
+  }
 }

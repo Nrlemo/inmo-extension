@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "Inmo · ronda por navegador",
   "short_name": "Inmo",
-  "version": "1.1.0",
-  "description": "Una vez por día abre tus búsquedas (Zonaprop, Argenprop, MercadoLibre) en este navegador y las carga en tu servidor de Inmo.",
+  "version": "1.2.0",
+  "description": "Una vez por día abre tus búsquedas de compra y alquiler (Zonaprop, Argenprop, MercadoLibre) en este navegador y las carga en tu servidor de Inmo.",
   "permissions": [
     "alarms",
     "storage",

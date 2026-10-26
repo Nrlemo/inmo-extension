@@ -25,6 +25,9 @@
   <label for="hora">Hora de la ronda diaria<small>Con una demora aleatoria de hasta 20 min. Si a esa hora el navegador estaba cerrado, corre al abrirlo.</small></label>
   <input type="time" id="hora" value="03:30">
   <label class="chk"><input type="checkbox" id="activa" checked> Ronda diaria activada</label>
+  <label>Qué recorre cada día<small>Una ronda por base, una detrás de otra (con unos minutos de pausa). Hace falta un Inmo con la base de alquiler.</small></label>
+  <label class="chk"><input type="checkbox" id="base-compra" checked> Compra</label>
+  <label class="chk"><input type="checkbox" id="base-alquiler" checked> Alquiler</label>
   <div class="row"><button class="pri" id="guardar">Guardar</button><button id="probar">Probar conexión</button></div>
   <div id="msg"></div>
 </div>
@@ -33,7 +36,7 @@
   <div id="estado">—</div>
   <div class="row"><button id="correr" title="Ignora el mínimo de 20 h entre rondas (no la espera tras un bloqueo)">Correr ronda ahora</button><button class="bad" id="cancelar">Cancelar ronda en curso</button></div>
 </div>
-<p style="color:var(--mut);font-size:.88rem">La ronda abre tus búsquedas (Zonaprop, Argenprop, MercadoLibre) en una ventana minimizada, una página por vez y con pausas de
+<p style="color:var(--mut);font-size:.88rem">Cada ronda abre las búsquedas de esa base (Zonaprop, Argenprop, MercadoLibre) en una ventana minimizada, una página por vez y con pausas de
   30 s a 2,5 min (las decide el servidor según su configuración). Podés seguir usando el navegador; no cierres esa ventana
   mientras corre. «Correr ronda ahora» no espera las 20 h desde la última ronda, pero sí las 24 h tras un bloqueo del portal.</p>
 <p style="color:var(--mut);font-size:.8rem">Versión <span id="version"></span> ·
